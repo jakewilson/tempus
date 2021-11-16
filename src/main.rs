@@ -5,6 +5,9 @@ use std::io::{ErrorKind, Write};
 
 use std::time::SystemTime;
 
+extern crate chrono;
+use chrono::{Local, TimeZone};
+
 enum SessionStatus {
     Started(u64),
     NotStarted,
@@ -23,6 +26,7 @@ fn main() {
 
     let tempus_session_path = format!("{}/{}", tempus_dir, TEMPUS_SESSION_NAME);
 
+    // TODO
     // grab the -p argument
     // check if the the `tempus_dir`/`project_name` dir exists
     // create it if it doesn't
@@ -133,8 +137,14 @@ fn record_session(start: u64, end: u64, dir: &str) {
 
     match file {
         Ok(mut file) => {
-            let session_record = format!("{},{},{}\n", start, end, end - start);
-            file.write(&session_record.as_bytes());
+            let start_dt = Local.timestamp(start as i64, 0).format("%Y-%m-%d %H:%M:%S").to_string();
+            let end_dt = Local.timestamp(end as i64, 0).format("%Y-%m-%d %H:%M:%S").to_string();
+            let session_record = format!("{},{}\n", start_dt, end_dt);
+
+            file.write(&session_record.as_bytes()).unwrap_or_else(|e| {
+                let session_info = format!("start,end,length\n{}", &session_record);
+                panic!("Error logging session:\n{}\nerror: {}", &session_info, e);
+            });
         },
         Err(e) => panic!("Error opening {}: {}", log_file_path, e),
     };
