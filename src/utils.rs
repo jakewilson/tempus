@@ -7,7 +7,7 @@ use std::io::ErrorKind;
 use std::fs::{self, File, Metadata, OpenOptions};
 use std::time::SystemTime;
 
-/// Get the created time in seconds or panic
+/// Get the created time or panic
 pub fn get_metadata_created(metadata: Metadata) -> DateTime<Local> {
     match metadata.created() {
         Ok(created_at) => system_time_to_local_datetime(&created_at),
@@ -35,10 +35,10 @@ pub fn get_home_dir() -> String {
     }
 }
 
-/// Create a directory if it doesn't exist & returns the name
-/// Panic if an error occurs while creating the dir
+/// Create a directory & all parent directories if they don't exist
+/// & return the name. Panic if an error occurs while creating the dir
 pub fn create_dir(dir: &str) {
-    fs::create_dir(&dir).unwrap_or_else(|e| {
+    fs::create_dir_all(&dir).unwrap_or_else(|e| {
         // if it already exists, no problem
         if e.kind() != ErrorKind::AlreadyExists {
             panic!("could not create {} directory: {}", dir, e);
