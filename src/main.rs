@@ -19,13 +19,14 @@ fn main() {
 
     let mut session = Session::new(&tempus_dir_path, SESSION_NAME);
     match session.status {
-        SessionStatus::Started(_) => {
-            session.end();
+        SessionStatus::Started(start_time) => {
+            let end_time = session.end();
             session.record(&TEMPUS_LOG_NAME);
+            println!("Session ended. {} to {}.", utils::format_datetime(&start_time), utils::format_datetime(&end_time));
         },
         SessionStatus::NotStarted => {
-            session.start();
-            println!("Session started.");
+            let start_time = session.start();
+            println!("Session started at {}.", utils::format_datetime(&start_time));
         }
     };
 }

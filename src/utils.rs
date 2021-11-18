@@ -1,3 +1,5 @@
+use chrono::{DateTime, Local, TimeZone};
+
 use std::env;
 
 use std::io::ErrorKind;
@@ -6,19 +8,23 @@ use std::fs::{self, File, Metadata, OpenOptions};
 use std::time::SystemTime;
 
 /// Get the created time in seconds or panic
-pub fn get_metadata_created_secs(metadata: Metadata) -> u64 {
+pub fn get_metadata_created(metadata: Metadata) -> DateTime<Local> {
     match metadata.created() {
-        Ok(created_at) => get_system_time_secs(&created_at),
+        Ok(created_at) => system_time_to_local_datetime(&created_at),
         Err(e) => panic!("err getting session metadata: {:?}", e),
     }
 }
 
-/// Convert a SystemTime to seconds or panic
-pub fn get_system_time_secs(time: &SystemTime) -> u64 {
+/// Convert a SystemTime to chrono::DateTime
+pub fn system_time_to_local_datetime(time: &SystemTime) -> DateTime<Local> {
     match time.duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(duration) => duration.as_secs(),
+        Ok(duration) => Local.timestamp(duration.as_secs() as i64, 0),
         Err(e) => panic!("error getting SystemTime seconds: {}", e),
     }
+}
+
+pub fn format_datetime(time: &DateTime<Local>) -> String {
+    time.format("%Y-%m-%d %H:%M:%S").to_string()
 }
 
 /// Return the value of $HOME or panic if it doesn't exist

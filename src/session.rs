@@ -1,22 +1,20 @@
 use std::io::{ErrorKind, Write};
 use std::fs::{self, File};
-use std::time::SystemTime;
 
-extern crate chrono;
-use chrono::{Local, TimeZone};
+use chrono::{DateTime, Local};
 
 use crate::utils;
 
 #[derive(Debug)]
 pub enum SessionStatus {
-    Started(u64),
+    Started(DateTime<Local>),
     NotStarted,
 }
 
 #[derive(Debug)]
 pub struct Session<'a> {
-    started_at_secs: Option<u64>,
-    ended_at_secs: Option<u64>,
+    started_at: Option<DateTime<Local>>,
+    ended_at: Option<DateTime<Local>>,
     session_dir: &'a str,
     session_path: String,
     pub status: SessionStatus,
@@ -27,14 +25,14 @@ impl Session<'_> {
     pub fn new<'a>(session_dir: &'a str, session_name: &'a str) -> Session<'a> {
         let session_path = format!("{}/{}", session_dir, session_name);
         let status = Session::get_status(&session_path);
-        let started_at_secs = match status {
+        let started_at = match status {
             SessionStatus::Started(secs) => Some(secs),
             SessionStatus::NotStarted => None,
         };
 
         Session {
-            started_at_secs,
-            ended_at_secs: None,
+            started_at,
+            ended_at: None,
             session_dir,
             status, 
             session_path,
@@ -48,7 +46,7 @@ impl Session<'_> {
     /// been started
     fn get_status(path: &str) -> SessionStatus {
         match fs::metadata(&path) {
-            Ok(metadata) => SessionStatus::Started(utils::get_metadata_created_secs(metadata)),
+            Ok(metadata) => SessionStatus::Started(utils::get_metadata_created(metadata)),
             Err(e) => {
                 if e.kind() == ErrorKind::NotFound {
                     SessionStatus::NotStarted
@@ -59,19 +57,23 @@ impl Session<'_> {
         }
     }
 
-    /// Start the session
-    pub fn start(&self) {
+    /// Start the session & return the start time
+    pub fn start(&self) -> DateTime<Local> {
         if let SessionStatus::Started(_) = self.status {
             panic!("Tried to start a session that is already started.");
         }
 
-        if let Err(e) = File::create(&self.session_path) {
-            panic!("error creating session file: {}", e);
+        match File::create(&self.session_path) {
+            Ok(file) => match file.metadata() {
+                Ok(metadata) => utils::get_metadata_created(metadata),
+                Err(e) => panic!("error getting session start time: {}", e),
+            },
+            Err(e) => panic!("error creating session file: {}", e),
         }
     }
 
-    /// End the session
-    pub fn end(&mut self) {
+    /// End the session & return the end time
+    pub fn end(&mut self) -> DateTime<Local> {
         if let SessionStatus::NotStarted = self.status {
             panic!("Tried to end a session that hasn't been started.");
         }
@@ -81,7 +83,11 @@ impl Session<'_> {
             panic!("error removing session file: {}", e);
         }
 
-        self.ended_at_secs = Some(utils::get_system_time_secs(&SystemTime::now()));
+        let ended_at = Local::now();
+
+        // we want two copies - one to save to the session & one to return
+        self.ended_at = Some(ended_at.clone());
+        ended_at
     }
 
     /// Creates the log file if it doesn't already exist
@@ -90,11 +96,11 @@ impl Session<'_> {
         let log_file_path = format!("{}/{}", self.session_dir, log_name);
         let mut file = utils::create_or_open_file(&log_file_path);
 
-        let start = self.started_at_secs.unwrap();
-        let end = self.ended_at_secs.unwrap();
+        let start = self.started_at.unwrap();
+        let end = self.ended_at.unwrap();
 
-        let start_dt = Local.timestamp(start as i64, 0).format("%Y-%m-%d %H:%M:%S").to_string();
-        let end_dt = Local.timestamp(end as i64, 0).format("%Y-%m-%d %H:%M:%S").to_string();
+        let start_dt = start.format("%Y-%m-%d %H:%M:%S").to_string();
+        let end_dt = end.format("%Y-%m-%d %H:%M:%S").to_string();
         let session_record = format!("{},{}\n", &start_dt, &end_dt);
 
         file.write(&session_record.as_bytes()).unwrap_or_else(|e| {
