@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, FixedOffset, Local, TimeZone};
 
 use std::env;
 
@@ -24,7 +24,14 @@ pub fn system_time_to_local_datetime(time: &SystemTime) -> DateTime<Local> {
 }
 
 pub fn format_datetime(time: &DateTime<Local>) -> String {
-    time.format("%Y-%m-%d %H:%M:%S").to_string()
+    time.to_rfc3339()
+}
+
+pub fn datetime_from_str(time: &str) -> DateTime<FixedOffset> {
+    match DateTime::parse_from_rfc3339(time) {
+        Ok(datetime) => datetime,
+        Err(e) => panic!("failed to parse datetime {}: {}", time, e),
+    }
 }
 
 /// Return the value of $HOME or panic if it doesn't exist
@@ -60,3 +67,7 @@ pub fn create_or_open_file(path: &str) -> File {
     }
 }
 
+/// Returns the length in hours between the start & end time
+pub fn get_length_hours<Tz: TimeZone>(start: &DateTime<Tz>, end: &DateTime<Tz>) -> f64 {
+    ((end.timestamp() - start.timestamp()) as f64) / 3600.0
+}

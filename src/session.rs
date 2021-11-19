@@ -99,8 +99,8 @@ impl Session<'_> {
         let start = self.started_at.unwrap();
         let end = self.ended_at.unwrap();
 
-        let start_dt = start.format("%Y-%m-%d %H:%M:%S").to_string();
-        let end_dt = end.format("%Y-%m-%d %H:%M:%S").to_string();
+        let start_dt = utils::format_datetime(&start);
+        let end_dt = utils::format_datetime(&end);
         let session_record = format!("{},{}\n", &start_dt, &end_dt);
 
         file.write(&session_record.as_bytes()).unwrap_or_else(|e| {
