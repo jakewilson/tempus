@@ -10,7 +10,7 @@ fn main() {
     // this arg is required, so it's safe to unwrap
     let project = matches.value_of("project").unwrap();
 
-    if matches.is_present("calc") {
+    if matches.is_present("hours") {
         tempus::calc_total_log_time(&project);
     } else {
         tempus::do_session(&project);
@@ -29,9 +29,9 @@ fn parse_args() -> ArgMatches<'static> {
             .help("project name")
             .takes_value(true)
             .required(true))
-        .arg(Arg::with_name("calc")
-            .short("c")
-            .long("calc")
+        .arg(Arg::with_name("hours")
+            .short("h")
+            .long("hours")
             .help("calculate hours worked for a project"))
         .get_matches()
 }
