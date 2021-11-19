@@ -19,7 +19,7 @@ fn main() {
 
 fn parse_args() -> ArgMatches<'static> {
     App::new("Tempus")
-        .version("0.1")
+        .version("1.0")
         .author("Jake Wilson")
         .about("Easy time tracking")
         .arg(Arg::with_name("project")
@@ -30,7 +30,6 @@ fn parse_args() -> ArgMatches<'static> {
             .takes_value(true)
             .required(true))
         .arg(Arg::with_name("hours")
-            .short("h")
             .long("hours")
             .help("calculate hours worked for a project"))
         .get_matches()
