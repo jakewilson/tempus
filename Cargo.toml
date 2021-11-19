@@ -2,6 +2,14 @@
 name = "tempus"
 version = "1.0.0"
 edition = "2021"
+authors = [
+    "Jake Wilson"
+]
+description = "Easy time tracking"
+repository = "https://git.sr.ht/~jakewilson/tempus"
+categories = ["command-line-interface"]
+license = "MIT"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
