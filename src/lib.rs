@@ -50,7 +50,7 @@ pub fn calc_total_log_time(project: &str) {
         total_length_hours += utils::get_length_hours(&start, &end);
     }
 
-    println!("{:.3} hours", total_length_hours);
+    println!("{:.3}", total_length_hours);
 }
 
 pub fn do_session(project: &str) {
