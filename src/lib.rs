@@ -9,16 +9,16 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-const TEMPUS_DIR_NAME: &str = "/tempus/";
+const TAEVUS_DIR_NAME: &str = "/taevus/";
 const SESSION_NAME: &str = ".session";
-const TEMPUS_LOG_NAME: &str = "tempus_log.txt";
+const TAEVUS_LOG_NAME: &str = "taevus_log.txt";
 
 fn get_project_dir_path(project: &str) -> String {
-    format!("{}/{}/{}", utils::get_home_dir(), &TEMPUS_DIR_NAME, &project)
+    format!("{}/{}/{}", utils::get_home_dir(), &TAEVUS_DIR_NAME, &project)
 }
 
 pub fn calc_total_log_time(project: &str) {
-    let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TEMPUS_LOG_NAME);
+    let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TAEVUS_LOG_NAME);
     let log_file_path = Path::new(&log_file_path_str);
 
     let mut file = match File::open(&log_file_path) {
@@ -61,7 +61,7 @@ pub fn do_session(project: &str) {
     match session.status {
         SessionStatus::Started(start_time) => {
             let end_time = session.end();
-            session.record(&TEMPUS_LOG_NAME);
+            session.record(&TAEVUS_LOG_NAME);
 
             let length_hours = format!("{:.3}", utils::get_length_hours(&start_time, &end_time));
 

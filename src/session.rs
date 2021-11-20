@@ -78,7 +78,7 @@ impl Session<'_> {
             panic!("Tried to end a session that hasn't been started.");
         }
 
-        // delete tempus session file - don't need it anymore
+        // delete session file - don't need it anymore
         if let Err(e) = fs::remove_file(&self.session_path) {
             panic!("error removing session file: {}", e);
         }

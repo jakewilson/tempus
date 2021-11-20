@@ -2,7 +2,7 @@ extern crate clap;
 
 use clap::{App, Arg, ArgMatches};
 
-use tempus;
+use taevus;
 
 fn main() {
     let matches = parse_args();
@@ -11,14 +11,14 @@ fn main() {
     let project = matches.value_of("project").unwrap();
 
     if matches.is_present("hours") {
-        tempus::calc_total_log_time(&project);
+        taevus::calc_total_log_time(&project);
     } else {
-        tempus::do_session(&project);
+        taevus::do_session(&project);
     }
 }
 
 fn parse_args() -> ArgMatches<'static> {
-    App::new("Tempus")
+    App::new("Taevus")
         .version("1.0")
         .author("Jake Wilson")
         .about("Easy time tracking")
