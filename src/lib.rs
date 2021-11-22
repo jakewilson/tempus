@@ -37,15 +37,15 @@ pub fn calc_total_log_time(project: &str) {
 
     let mut total_length_hours = 0.0;
 
-    for i in contents.split('\n') {
-        let hi: Vec<&str> = i.split(',').collect();
+    for line in contents.split('\n') {
+        let times: Vec<&str> = line.split(',').collect();
 
-        if hi.len() < 2 {
+        if times.len() < 2 {
             break;
         }
 
-        let start = utils::datetime_from_str(hi[0]);
-        let end = utils::datetime_from_str(hi[1]);
+        let start = utils::datetime_from_str(times[0]);
+        let end = utils::datetime_from_str(times[1]);
 
         total_length_hours += utils::get_length_hours(&start, &end);
     }
