@@ -10,6 +10,7 @@ $ cargo install taevus
 
 Usage
 -----
+To start a session:
 ```
 $ taevus -p <project_name>
 ```
