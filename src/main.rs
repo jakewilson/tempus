@@ -2,7 +2,7 @@ extern crate clap;
 
 use clap::{App, Arg, ArgMatches};
 
-use tempus;
+use tempus_cli;
 
 fn main() {
     let matches = parse_args();
@@ -11,11 +11,11 @@ fn main() {
     let project = matches.value_of("project").unwrap();
 
     if matches.is_present("hours") {
-        tempus::calc_total_log_time(&project);
+        tempus_cli::calc_total_log_time(&project);
     } else if matches.is_present("start") {
-        tempus::print_session_start(&project);
+        tempus_cli::print_session_start(&project);
     } else {
-        tempus::do_session(&project);
+        tempus_cli::do_session(&project);
     }
 }
 
@@ -33,11 +33,11 @@ fn parse_args() -> ArgMatches<'static> {
             .required(true))
         .arg(Arg::with_name("hours")
             .long("hours")
-            .help("calculate hours worked for a project"))
+            .help("Calculates hours worked for a project"))
         .arg(Arg::with_name("start")
             .short("s")
             .long("start")
-            .help("print current session start time"))
+            .help("Prints current session start time"))
         .get_matches()
 }
 
