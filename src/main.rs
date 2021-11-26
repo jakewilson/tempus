@@ -12,6 +12,8 @@ fn main() {
 
     if matches.is_present("hours") {
         taevus::calc_total_log_time(&project);
+    } else if matches.is_present("start") {
+        taevus::print_session_start(&project);
     } else {
         taevus::do_session(&project);
     }
@@ -32,6 +34,10 @@ fn parse_args() -> ArgMatches<'static> {
         .arg(Arg::with_name("hours")
             .long("hours")
             .help("calculate hours worked for a project"))
+        .arg(Arg::with_name("start")
+            .short("s")
+            .long("start")
+            .help("print current session start time"))
         .get_matches()
 }
 

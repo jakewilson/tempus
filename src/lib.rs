@@ -73,3 +73,13 @@ pub fn do_session(project: &str) {
         }
     };
 }
+
+pub fn print_session_start(project: &str) {
+    let project_dir_path = get_project_dir_path(project);
+
+    let session = Session::new(&project_dir_path, SESSION_NAME);
+    match session.status {
+        SessionStatus::Started(start_time) => println!("{}", utils::format_datetime(&start_time)),
+        SessionStatus::NotStarted => eprintln!("No session started for {}", project),
+    }
+}
