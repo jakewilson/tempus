@@ -100,7 +100,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4d15c810519a91cf877e7e36e63fe068815c678181439f2f29e2562147c3694"
 
 [[package]]
-name = "taevus"
+name = "tempus"
 version = "1.0.0"
 dependencies = [
  "chrono",

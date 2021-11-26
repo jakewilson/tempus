@@ -1,27 +1,25 @@
-taevus
+tempus
 ======
 Easy time tracking.
 
 Installation
 ------------
 ```
-$ cargo install taevus
+$ cargo install tempus-cli
 ```
 
 Usage
 -----
 To start a session:
 ```
-$ taevus -p <project_name>
+$ tempus -p <project_name>
 ```
 
 the same command ends the session.
 
-This will create a directory in `$HOME/taevus/<project>` with a log file
-at `$HOME/taevus/<project>/taevus_log.txt`. You can view all start & end times for each
+This will create a directory in `$HOME/tempus/<project>` with a log file
+at `$HOME/tempus/<project>/taevus_log.txt`. You can view all start & end times for each
 session in this file. To calculate the total # of hours worked for a project, run
 ```
-$ taevus -p <project_name> --hours
+$ tempus -p <project_name> --hours
 ```
-
-'taevus' is a [portmanteau](https://en.wikipedia.org/wiki/Portmanteau) of 'tempus' and 'aevum', two words in Latin that mean 'time'.
