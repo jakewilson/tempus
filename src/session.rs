@@ -90,8 +90,8 @@ impl Session<'_> {
         ended_at
     }
 
-    /// Creates the log file if it doesn't already exist
-    /// Records the start, & end of the session
+    /// Creates the log file if it doesn't already exist &
+    /// records the start & end of the session
     pub fn record(&self, log_name: &str) {
         let log_file_path = format!("{}/{}", self.session_dir, log_name);
         let mut file = utils::create_or_open_file(&log_file_path);
