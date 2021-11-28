@@ -5,8 +5,6 @@ pub mod session;
 
 use session::{Session, SessionStatus};
 
-use std::fs::File;
-use std::io::Read;
 use std::path::Path;
 
 const TEMPUS_DIR_NAME: &str = "/tempus/";
@@ -17,24 +15,11 @@ fn get_project_dir_path(project: &str) -> String {
     format!("{}/{}/{}", utils::get_home_dir(), &TEMPUS_DIR_NAME, &project)
 }
 
-pub fn calc_total_log_time(project: &str) {
+pub fn print_total_log_time(project: &str) {
     let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TEMPUS_LOG_NAME);
     let log_file_path = Path::new(&log_file_path_str);
 
-    let mut file = match File::open(&log_file_path) {
-        Ok(file) => file,
-        Err(e) => {
-            eprintln!("error opening {}: {}", log_file_path.display(), e);
-            std::process::exit(1);
-        }
-    };
-
-    let mut contents = String::new();
-    if let Err(e) = file.read_to_string(&mut contents) {
-        eprintln!("error reading {}: {}", log_file_path.display(), e);
-        std::process::exit(1);
-    }
-
+    let contents = utils::get_file_contents(&log_file_path);
     let mut total_length_hours = 0.0;
 
     for line in contents.split('\n') {
@@ -82,4 +67,12 @@ pub fn print_session_start(project: &str) {
         SessionStatus::Started(start_time) => println!("{}", utils::format_datetime(&start_time)),
         SessionStatus::NotStarted => eprintln!("No session started for {}", project),
     }
+}
+
+pub fn print_times(project: &str) {
+    let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TEMPUS_LOG_NAME);
+    let log_file_path = Path::new(&log_file_path_str);
+
+    let contents = utils::get_file_contents(&log_file_path);
+    print!("{}", contents);
 }

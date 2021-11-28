@@ -2,9 +2,10 @@ use chrono::{DateTime, FixedOffset, Local, TimeZone};
 
 use std::env;
 
-use std::io::ErrorKind;
+use std::io::{ErrorKind, Read};
 
 use std::fs::{self, File, Metadata, OpenOptions};
+use std::path::Path;
 use std::time::SystemTime;
 
 /// Get the created time or panic
@@ -70,4 +71,22 @@ pub fn create_or_open_file(path: &str) -> File {
 /// Returns the length in hours between the start & end time
 pub fn get_length_hours<Tz: TimeZone>(start: &DateTime<Tz>, end: &DateTime<Tz>) -> f64 {
     ((end.timestamp() - start.timestamp()) as f64) / 3600.0
+}
+
+pub fn get_file_contents(path: &Path) -> String {
+    let mut file = match File::open(&path) {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("error opening {}: {}", path.display(), e);
+            std::process::exit(1);
+        }
+    };
+
+    let mut contents = String::new();
+    if let Err(e) = file.read_to_string(&mut contents) {
+        eprintln!("error reading {}: {}", path.display(), e);
+        std::process::exit(1);
+    }
+
+    contents
 }
