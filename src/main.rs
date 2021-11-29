@@ -23,7 +23,7 @@ fn main() {
 
 fn parse_args() -> ArgMatches<'static> {
     App::new("Tempus")
-        .version("1.0.2")
+        .version("1.1.0")
         .author("Jake Wilson")
         .about("Easy time tracking")
         .arg(Arg::with_name("project")
