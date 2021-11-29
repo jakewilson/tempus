@@ -9,7 +9,6 @@ use crate::utils;
 /// TEMPUS_LOG file
 pub struct Times<'a> {
     session_times: IntoIter<&'a str>,
-    today_only: bool,
 }
 
 impl<'a> Times<'_> {
@@ -30,7 +29,6 @@ impl<'a> Times<'_> {
 
         Times {
             session_times: lines.into_iter(),
-            today_only,
         }
     }
 }

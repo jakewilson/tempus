@@ -22,18 +22,11 @@ pub fn print_total_log_time(project: &str, today_only: bool) {
     let log_file_path = Path::new(&log_file_path_str);
 
     let contents = utils::get_file_contents(&log_file_path);
+    let times = Times::new(&contents, today_only);
+
     let mut total_length_hours = 0.0;
 
-    for line in contents.split('\n') {
-        let times: Vec<&str> = line.split(',').collect();
-
-        if times.len() < 2 {
-            break;
-        }
-
-        let start = utils::datetime_from_str(times[0]);
-        let end = utils::datetime_from_str(times[1]);
-
+    for (start, end) in times {
         total_length_hours += utils::get_length_hours(&start, &end);
     }
 
