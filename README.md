@@ -17,9 +17,25 @@ $ tempus -p <project_name>
 
 the same command ends the session.
 
-This will create a directory in `$HOME/tempus/<project>` with a log file
-at `$HOME/tempus/<project>/tempus_log.txt`. You can view all start & end times for each
-session in this file. To calculate the total # of hours worked for a project, run
+To calculate the total # of hours worked for a project, run
 ```
 $ tempus -p <project_name> --hours
 ```
+
+To view all session times for a project, run
+```
+$ tempus -p <project_name> --times
+```
+
+To view all session times for today, run
+```
+$ tempus -p <project_name> --times --today
+```
+
+The `--today` flag also works with `--hours`, to get hours for today.
+
+To view the start time of a session currently in progress, run
+```
+$ tempus -p <project_name> --start
+```
+This can also be used if you've forgotten whether you've started a session or not.
