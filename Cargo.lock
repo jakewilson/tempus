@@ -101,7 +101,7 @@ checksum = "b4d15c810519a91cf877e7e36e63fe068815c678181439f2f29e2562147c3694"
 
 [[package]]
 name = "tempus-cli"
-version = "1.0.2"
+version = "1.1.0"
 dependencies = [
  "chrono",
  "clap",

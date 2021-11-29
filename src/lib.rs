@@ -24,11 +24,9 @@ pub fn print_total_log_time(project: &str, today_only: bool) {
     let contents = utils::get_file_contents(&log_file_path);
     let times = Times::new(&contents, today_only);
 
-    let mut total_length_hours = 0.0;
-
-    for (start, end) in times {
-        total_length_hours += utils::get_length_hours(&start, &end);
-    }
+    let total_length_hours = times.fold(0.0, |sum, (start, end)| {
+        sum + utils::get_length_hours(&start, &end)
+    });
 
     println!("{:.3}", total_length_hours);
 }
