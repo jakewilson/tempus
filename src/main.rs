@@ -11,11 +11,11 @@ fn main() {
     let project = matches.value_of("project").unwrap();
 
     if matches.is_present("hours") {
-        tempus_cli::print_total_log_time(&project);
+        tempus_cli::print_total_log_time(&project, matches.is_present("today"));
     } else if matches.is_present("start") {
         tempus_cli::print_session_start(&project);
     } else if matches.is_present("times") {
-        tempus_cli::print_times(&project);
+        tempus_cli::print_times(&project, matches.is_present("today"));
     } else {
         tempus_cli::do_session(&project);
     }

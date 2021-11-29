@@ -2,8 +2,10 @@ extern crate chrono;
 
 pub mod utils;
 pub mod session;
+pub mod times;
 
 use session::{Session, SessionStatus};
+use times::Times;
 
 use std::path::Path;
 
@@ -15,7 +17,7 @@ fn get_project_dir_path(project: &str) -> String {
     format!("{}/{}/{}", utils::get_home_dir(), &TEMPUS_DIR_NAME, &project)
 }
 
-pub fn print_total_log_time(project: &str) {
+pub fn print_total_log_time(project: &str, today_only: bool) {
     let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TEMPUS_LOG_NAME);
     let log_file_path = Path::new(&log_file_path_str);
 
@@ -66,13 +68,20 @@ pub fn print_session_start(project: &str) {
     match session.status {
         SessionStatus::Started(start_time) => println!("{}", utils::format_datetime(&start_time)),
         SessionStatus::NotStarted => eprintln!("No session started for {}", project),
-    }
+    };
 }
 
-pub fn print_times(project: &str) {
+pub fn print_times(project: &str, today_only: bool) {
     let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TEMPUS_LOG_NAME);
     let log_file_path = Path::new(&log_file_path_str);
 
     let contents = utils::get_file_contents(&log_file_path);
-    print!("{}", contents);
+    let times = Times::new(&contents, today_only);
+
+    for (start, end) in times {
+        println!("{}, {}",
+            utils::datetime_to_readable_str(&start),
+            utils::datetime_to_readable_str(&end)
+        );
+    }
 }

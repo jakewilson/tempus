@@ -90,3 +90,7 @@ pub fn get_file_contents(path: &Path) -> String {
 
     contents
 }
+
+pub fn datetime_to_readable_str(date: &DateTime<FixedOffset>) -> String {
+    date.format("%Y-%m-%d %H:%M:%S").to_string()
+}
