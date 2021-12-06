@@ -16,6 +16,8 @@ fn main() {
         tempus_cli::print_session_start(&project);
     } else if matches.is_present("times") {
         tempus_cli::print_times(&project, matches.is_present("today"));
+    } else if matches.is_present("delete") {
+        tempus_cli::delete_session(&project);
     } else {
         tempus_cli::do_session(&project);
     }
@@ -30,9 +32,9 @@ fn parse_args() -> ArgMatches<'static> {
             .short("p")
             .long("project")
             .value_name("PROJECT")
-            .help("project name")
             .takes_value(true)
-            .required(true))
+            .required(true)
+            .help("project name"))
         .arg(Arg::with_name("hours")
             .long("hours")
             .help("Calculates hours worked for a project"))
@@ -46,6 +48,10 @@ fn parse_args() -> ArgMatches<'static> {
         .arg(Arg::with_name("times")
             .long("times")
             .help("Prints all session times for a project"))
+        .arg(Arg::with_name("delete")
+            .short("x")
+            .long("delete")
+            .help("Ends the session without recording it"))
         .get_matches()
 }
 
