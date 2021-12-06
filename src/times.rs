@@ -15,7 +15,7 @@ impl<'a> Times<'_> {
     pub fn new(content: &'a str, today_only: bool) -> Times<'a> {
         let mut lines: Vec<&str> = content.split("\n").collect();
         if today_only {
-            let now = utils::system_time_to_local_datetime(&SystemTime::now());
+            let now = utils::system_time_to_datetime(&SystemTime::now());
             let now_str = format!("{:?}", &now);
             // take an rfc_3339 date string like
             // 2021-11-28T18:28:38-05:00

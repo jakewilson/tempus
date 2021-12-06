@@ -9,22 +9,22 @@ use std::path::Path;
 use std::time::SystemTime;
 
 /// Get the created time or panic
-pub fn get_metadata_created(metadata: Metadata) -> DateTime<Local> {
+pub fn get_metadata_created(metadata: Metadata) -> DateTime<FixedOffset> {
     match metadata.created() {
-        Ok(created_at) => system_time_to_local_datetime(&created_at),
+        Ok(created_at) => system_time_to_datetime(&created_at),
         Err(e) => panic!("err getting session metadata: {:?}", e),
     }
 }
 
 /// Convert a SystemTime to chrono::DateTime
-pub fn system_time_to_local_datetime(time: &SystemTime) -> DateTime<Local> {
+pub fn system_time_to_datetime(time: &SystemTime) -> DateTime<FixedOffset> {
     match time.duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(duration) => Local.timestamp(duration.as_secs() as i64, 0),
+        Ok(duration) => DateTime::from(Local.timestamp(duration.as_secs() as i64, 0)),
         Err(e) => panic!("error getting SystemTime seconds: {}", e),
     }
 }
 
-pub fn format_datetime(time: &DateTime<Local>) -> String {
+pub fn format_datetime(time: &DateTime<FixedOffset>) -> String {
     time.to_rfc3339()
 }
 
