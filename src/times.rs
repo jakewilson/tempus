@@ -1,9 +1,11 @@
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime, FixedOffset, Local};
 
 use std::time::SystemTime;
 use std::vec::IntoIter;
 
 use crate::utils;
+
+pub struct DateRange (pub DateTime<Local>, pub DateTime<Local>);
 
 /// stores time content of the
 /// TEMPUS_LOG file
@@ -12,19 +14,24 @@ pub struct Times<'a> {
 }
 
 impl<'a> Times<'_> {
-    pub fn new(content: &'a str, today_only: bool) -> Times<'a> {
-        let mut lines: Vec<&str> = content.split("\n").collect();
-        if today_only {
-            let now = utils::system_time_to_local_datetime(&SystemTime::now());
-            let now_str = format!("{:?}", &now);
-            // take an rfc_3339 date string like
-            // 2021-11-28T18:28:38-05:00
-            // and split it at 'T' to get the yyyy-mm-dd
-            // call next() because we want the first match
-            match now_str.split("T").next() {
-                Some(date) => lines.retain(|x| x.contains(date)),
-                None => eprintln!("Could not filter dates to today"),
-            }
+    pub fn new(content: &'a str, date_range: &Option<DateRange>) -> Times<'a> {
+        let mut lines: Vec<&str> = content.split('\n').collect();
+        let mut dates = lines
+            .iter()
+            .map(|line| {
+                let v = line.split(',').take(2).collect::<Vec<&str>>();
+                (utils::datetime_from_str(v[0]), utils::datetime_from_str(v[1]))
+            })
+            .collect::<Vec<DateRange>>();
+
+        dbg!(dates);
+        if let Some(DateRange(start, end)) = date_range {
+            let start_ms = start.timestamp();
+            let end_ms   = end.timestamp();
+            dates.retain(|(session_start, _)| {
+                let ms = session_start.timestamp();
+                ms >= start_ms && ms <= end_ms
+            });
         }
 
         Times {

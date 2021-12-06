@@ -5,7 +5,7 @@ pub mod session;
 pub mod times;
 
 use session::{Session, SessionStatus};
-use times::Times;
+use times::{DateRange, Times};
 
 use std::path::Path;
 
@@ -17,12 +17,12 @@ fn get_project_dir_path(project: &str) -> String {
     format!("{}/{}/{}", utils::get_home_dir(), &TEMPUS_DIR_NAME, &project)
 }
 
-pub fn print_total_log_time(project: &str, today_only: bool) {
+pub fn print_total_log_time(project: &str, date_range: &Option<DateRange>) {
     let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TEMPUS_LOG_NAME);
     let log_file_path = Path::new(&log_file_path_str);
 
     let contents = utils::get_file_contents(&log_file_path);
-    let times = Times::new(&contents, today_only);
+    let times = Times::new(&contents, date_range);
 
     let total_length_hours = times.fold(0.0, |sum, (start, end)| {
         sum + utils::get_length_hours(&start, &end)
@@ -83,10 +83,12 @@ pub fn print_session_start(project: &str) {
 }
 
 pub fn print_times(project: &str, today_only: bool) {
+    todo!();
     let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TEMPUS_LOG_NAME);
     let log_file_path = Path::new(&log_file_path_str);
 
     let contents = utils::get_file_contents(&log_file_path);
+    /*
     let times = Times::new(&contents, today_only);
 
     for (start, end) in times {
@@ -95,4 +97,10 @@ pub fn print_times(project: &str, today_only: bool) {
             utils::datetime_to_readable_str(&end)
         );
     }
+    */
+}
+
+pub fn exit(msg: &str) {
+    eprintln!("{}", msg);
+    std::process::exit(1);
 }

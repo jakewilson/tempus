@@ -8,6 +8,8 @@ use std::fs::{self, File, Metadata, OpenOptions};
 use std::path::Path;
 use std::time::SystemTime;
 
+use regex::Regex;
+
 /// Get the created time or panic
 pub fn get_metadata_created(metadata: Metadata) -> DateTime<Local> {
     match metadata.created() {
@@ -91,6 +93,30 @@ pub fn get_file_contents(path: &Path) -> String {
     contents
 }
 
+// TODO may be able to change this to a Tz: TimeZone generic param
+// instead of fixedoffset
 pub fn datetime_to_readable_str(date: &DateTime<FixedOffset>) -> String {
     date.format("%Y-%m-%d %H:%M:%S").to_string()
+}
+
+pub fn get_start_date() -> DateTime<Local> {
+    Local.ymd(1970, 1, 1).and_hms(0, 0, 0)
+}
+
+pub fn get_todays_date() -> DateTime<Local> {
+    system_time_to_local_datetime(&SystemTime::now())
+}
+
+pub fn get_date_from_arg(date_arg: &str) -> DateTime<Local> {
+    let re = Regex::new(r"^(\d{4})-(\d{2})-(\d{2})$").unwrap();
+
+    let caps = re
+        .captures(date_arg)
+        .expect(&format!("{} is not a valid date", date_arg));
+
+    let year:  i32 = caps[1].parse().unwrap();
+    let month: u32 = caps[2].parse().unwrap();
+    let day:   u32 = caps[3].parse().unwrap();
+
+    Local.ymd(year, month, day).and_hms(0, 0, 0)
 }
