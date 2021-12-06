@@ -82,22 +82,19 @@ pub fn print_session_start(project: &str) {
     };
 }
 
-pub fn print_times(project: &str, today_only: bool) {
-    todo!();
+pub fn print_times(project: &str, date_range: &Option<DateRange>) {
     let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TEMPUS_LOG_NAME);
     let log_file_path = Path::new(&log_file_path_str);
 
     let contents = utils::get_file_contents(&log_file_path);
-    /*
-    let times = Times::new(&contents, today_only);
+    let times = Times::new(&contents, date_range);
 
-    for (start, end) in times {
+    for DateRange(start, end) in times {
         println!("{}, {}",
             utils::datetime_to_readable_str(&start),
             utils::datetime_to_readable_str(&end)
         );
     }
-    */
 }
 
 pub fn exit(msg: &str) {

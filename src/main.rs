@@ -1,12 +1,11 @@
 extern crate clap;
 
-use chrono::{DateTime, FixedOffset, Local, TimeZone};
+use chrono::{DateTime, FixedOffset, Local};
 
 use clap::{App, Arg, ArgMatches};
 
-use tempus_cli;
-use tempus_cli::times::DateRange;
 use tempus_cli::utils;
+use tempus_cli::times::DateRange;
 
 fn main() {
     let matches = parse_args();
@@ -27,7 +26,7 @@ fn main() {
     } else if matches.is_present("start") {
         tempus_cli::print_session_start(&project);
     } else if matches.is_present("times") {
-        tempus_cli::print_times(&project, matches.is_present("today"));
+        tempus_cli::print_times(&project, &date_range);
     } else if matches.is_present("delete") {
         tempus_cli::delete_session(&project);
     } else {
@@ -82,13 +81,20 @@ fn parse_date_range(date_range: &str) -> Result<DateRange, &str> {
         .split("..")
         .collect::<Vec<&str>>();
 
-    dbg!(&dates);
     let start_date = utils::get_start_date();
     let todays_date: DateTime<FixedOffset> = DateTime::from(Local::now());
-    // no dots (-d <date>), so this is the end date
-    if dates.len() == 1 {
-        return Ok(DateRange(start_date, utils::get_date_from_arg(dates[0])));
-    }
 
-    Err("Invalid date-range provided")
+    if dates.len() == 1 {
+        // no dots (-d <date>), so this is the end date
+        Ok(DateRange(start_date, utils::get_date_from_arg(dates[0])))
+    } else if dates.len() == 2 {
+        match (dates[0], dates[1]) {
+            ("", "") => Err("Invalid date-range provided"),
+            ("", _)  => Ok(DateRange(start_date, utils::get_date_from_arg(dates[1]))),
+            (_, "")  => Ok(DateRange(utils::get_date_from_arg(dates[0]), todays_date)),
+            (_, _)   => Ok(DateRange(utils::get_date_from_arg(dates[0]), utils::get_date_from_arg(dates[1]))),
+        }
+    } else {
+        Err("Invalid date-range provided")
+    }
 }
