@@ -11,22 +11,22 @@ use std::time::SystemTime;
 use regex::Regex;
 
 /// Get the created time or panic
-pub fn get_metadata_created(metadata: Metadata) -> DateTime<Local> {
+pub fn get_metadata_created(metadata: Metadata) -> DateTime<FixedOffset> {
     match metadata.created() {
-        Ok(created_at) => system_time_to_local_datetime(&created_at),
+        Ok(created_at) => system_time_to_datetime(&created_at),
         Err(e) => panic!("err getting session metadata: {:?}", e),
     }
 }
 
 /// Convert a SystemTime to chrono::DateTime
-pub fn system_time_to_local_datetime(time: &SystemTime) -> DateTime<Local> {
+pub fn system_time_to_datetime(time: &SystemTime) -> DateTime<FixedOffset> {
     match time.duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(duration) => Local.timestamp(duration.as_secs() as i64, 0),
+        Ok(duration) => DateTime::from(Local.timestamp(duration.as_secs() as i64, 0)),
         Err(e) => panic!("error getting SystemTime seconds: {}", e),
     }
 }
 
-pub fn format_datetime(time: &DateTime<Local>) -> String {
+pub fn format_datetime(time: &DateTime<FixedOffset>) -> String {
     time.to_rfc3339()
 }
 
@@ -71,7 +71,7 @@ pub fn create_or_open_file(path: &str) -> File {
 }
 
 /// Returns the length in hours between the start & end time
-pub fn get_length_hours<Tz: TimeZone>(start: &DateTime<Tz>, end: &DateTime<Tz>) -> f64 {
+pub fn get_length_hours(start: &DateTime<FixedOffset>, end: &DateTime<FixedOffset>) -> f64 {
     ((end.timestamp() - start.timestamp()) as f64) / 3600.0
 }
 
@@ -99,15 +99,11 @@ pub fn datetime_to_readable_str(date: &DateTime<FixedOffset>) -> String {
     date.format("%Y-%m-%d %H:%M:%S").to_string()
 }
 
-pub fn get_start_date() -> DateTime<Local> {
-    Local.ymd(1970, 1, 1).and_hms(0, 0, 0)
+pub fn get_start_date() -> DateTime<FixedOffset> {
+    DateTime::from(Local.ymd(1970, 1, 1).and_hms(0, 0, 0))
 }
 
-pub fn get_todays_date() -> DateTime<Local> {
-    system_time_to_local_datetime(&SystemTime::now())
-}
-
-pub fn get_date_from_arg(date_arg: &str) -> DateTime<Local> {
+pub fn get_date_from_arg(date_arg: &str) -> DateTime<FixedOffset> {
     let re = Regex::new(r"^(\d{4})-(\d{2})-(\d{2})$").unwrap();
 
     let caps = re
@@ -118,5 +114,5 @@ pub fn get_date_from_arg(date_arg: &str) -> DateTime<Local> {
     let month: u32 = caps[2].parse().unwrap();
     let day:   u32 = caps[3].parse().unwrap();
 
-    Local.ymd(year, month, day).and_hms(0, 0, 0)
+    DateTime::from(Local.ymd(year, month, day).and_hms(0, 0, 0))
 }

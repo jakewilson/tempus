@@ -24,7 +24,7 @@ pub fn print_total_log_time(project: &str, date_range: &Option<DateRange>) {
     let contents = utils::get_file_contents(&log_file_path);
     let times = Times::new(&contents, date_range);
 
-    let total_length_hours = times.fold(0.0, |sum, (start, end)| {
+    let total_length_hours = times.fold(0.0, |sum, DateRange(start, end)| {
         sum + utils::get_length_hours(&start, &end)
     });
 
@@ -47,7 +47,7 @@ pub fn do_session(project: &str) {
         },
         SessionStatus::NotStarted => {
             let start_time = session.start();
-            println!("{} session started at {}.", &project, utils::format_datetime(&start_time));
+            println!("{} session started at {}.", &project, utils::datetime_to_readable_str(&start_time));
         }
     };
 }
@@ -63,7 +63,7 @@ pub fn delete_session(project: &str) {
             println!(
                 "{} session ended at {} and deleted.",
                 &project,
-                utils::format_datetime(&end_time)
+                utils::datetime_to_readable_str(&end_time)
             );
         },
         SessionStatus::NotStarted => {
@@ -77,7 +77,7 @@ pub fn print_session_start(project: &str) {
 
     let session = Session::new(&project_dir_path, SESSION_NAME);
     match session.status {
-        SessionStatus::Started(start_time) => println!("{}", utils::format_datetime(&start_time)),
+        SessionStatus::Started(start_time) => println!("{}", utils::datetime_to_readable_str(&start_time)),
         SessionStatus::NotStarted => eprintln!("No session started for {}.", project),
     };
 }

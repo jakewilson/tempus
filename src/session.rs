@@ -1,20 +1,20 @@
 use std::io::{ErrorKind, Write};
 use std::fs::{self, File};
 
-use chrono::{DateTime, Local};
+use chrono::{DateTime, FixedOffset, Local};
 
 use crate::utils;
 
 #[derive(Debug)]
 pub enum SessionStatus {
-    Started(DateTime<Local>),
+    Started(DateTime<FixedOffset>),
     NotStarted,
 }
 
 #[derive(Debug)]
 pub struct Session<'a> {
-    started_at: Option<DateTime<Local>>,
-    ended_at: Option<DateTime<Local>>,
+    started_at: Option<DateTime<FixedOffset>>,
+    ended_at: Option<DateTime<FixedOffset>>,
     session_dir: &'a str,
     session_path: String,
     pub status: SessionStatus,
@@ -58,7 +58,7 @@ impl Session<'_> {
     }
 
     /// Start the session & return the start time
-    pub fn start(&self) -> DateTime<Local> {
+    pub fn start(&self) -> DateTime<FixedOffset> {
         if let SessionStatus::Started(_) = self.status {
             panic!("Tried to start a session that is already started.");
         }
@@ -73,7 +73,7 @@ impl Session<'_> {
     }
 
     /// End the session & return the end time
-    pub fn end(&mut self) -> DateTime<Local> {
+    pub fn end(&mut self) -> DateTime<FixedOffset> {
         if let SessionStatus::NotStarted = self.status {
             panic!("Tried to end a session that hasn't been started.");
         }
@@ -83,7 +83,7 @@ impl Session<'_> {
             panic!("error removing session file: {}", e);
         }
 
-        let ended_at = Local::now();
+        let ended_at: DateTime<FixedOffset> = DateTime::from(Local::now());
 
         // we want two copies - one to save to the session & one to return
         self.ended_at = Some(ended_at.clone());

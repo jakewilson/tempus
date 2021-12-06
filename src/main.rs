@@ -84,7 +84,7 @@ fn parse_date_range(date_range: &str) -> Result<DateRange, &str> {
 
     dbg!(&dates);
     let start_date = utils::get_start_date();
-    let todays_date = utils::get_todays_date();
+    let todays_date: DateTime<FixedOffset> = DateTime::from(Local::now());
     // no dots (-d <date>), so this is the end date
     if dates.len() == 1 {
         return Ok(DateRange(start_date, utils::get_date_from_arg(dates[0])));
