@@ -83,7 +83,7 @@ impl Session<'_> {
             panic!("error removing session file: {}", e);
         }
 
-        let ended_at: DateTime<FixedOffset> = DateTime::from(Local::now());
+        let ended_at = utils::local_to_fixed_offset(Local::now());
 
         // we want two copies - one to save to the session & one to return
         self.ended_at = Some(ended_at.clone());

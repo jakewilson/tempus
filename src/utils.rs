@@ -1,6 +1,6 @@
 use crate::times::DateRange;
 
-use chrono::{DateTime, FixedOffset, Local, TimeZone, Utc};
+use chrono::{DateTime, Datelike, FixedOffset, Local, TimeZone};
 
 use std::env;
 
@@ -23,7 +23,7 @@ pub fn get_metadata_created(metadata: Metadata) -> DateTime<FixedOffset> {
 /// Convert a SystemTime to chrono::DateTime
 pub fn system_time_to_datetime(time: &SystemTime) -> DateTime<FixedOffset> {
     match time.duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(duration) => DateTime::from(Local.timestamp(duration.as_secs() as i64, 0)),
+        Ok(duration) => local_to_fixed_offset(Local.timestamp(duration.as_secs() as i64, 0)),
         Err(e) => panic!("error getting SystemTime seconds: {}", e),
     }
 }
@@ -33,18 +33,13 @@ pub fn format_datetime(time: &DateTime<FixedOffset>) -> String {
 }
 
 pub fn datetime_from_str(time: &str) -> DateTime<FixedOffset> {
-    match DateTime::parse_from_rfc3339(time) {
-        Ok(datetime) => datetime,
-        Err(e) => panic!("failed to parse datetime {}: {}", time, e),
-    }
+    DateTime::parse_from_rfc3339(time)
+        .unwrap_or_else(|e| panic!("failed to parse datetime {}: {}", time, e))
 }
 
 /// Return the value of $HOME or panic if it doesn't exist
 pub fn get_home_dir() -> String {
-    match env::var("HOME") {
-        Ok(home_dir) => home_dir,
-        Err(e) => panic!("error getting $HOME env variable: {}", e),
-    }
+    env::var("HOME").unwrap_or_else(|e| panic!("error getting $HOME env variable: {}", e))
 }
 
 /// Create a directory & all parent directories if they don't exist
@@ -98,22 +93,39 @@ pub fn datetime_to_readable_str(date: &DateTime<FixedOffset>) -> String {
 }
 
 pub fn get_start_date() -> DateTime<FixedOffset> {
-    DateTime::from(Utc.ymd(1970, 1, 1).and_hms(0, 0, 0))
+    local_to_fixed_offset(Local.ymd(1970, 1, 1).and_hms(0, 0, 0))
 }
 
 pub fn get_date_from_arg(date_arg: &str) -> DateTime<FixedOffset> {
-    let re = Regex::new(r"^(\d{4})-(\d{2})-(\d{2})$").unwrap();
+    let re = Regex::new(r"^(\d{4}-)?(\d{1,2})-(\d{1,2})$").unwrap();
 
     let caps = re
         .captures(date_arg)
         .expect(&format!("{} is not a valid date", date_arg));
 
-    let year: i32 = caps[1].parse().unwrap();
+    let year = match caps.get(1) {
+        // 0..4 is safe because if it exists, it _must_
+        // look like `YYYY-` -- just remove the dash
+        Some(_) => caps[1][0..4].parse().unwrap(),
+        // if no year is provided, use this year
+        None => Local::today().year(),
+    };
+
     let month: u32 = caps[2].parse().unwrap();
     let day: u32 = caps[3].parse().unwrap();
 
     // if it's an 'end' date can do `and_hms(23, 59, 59)` for inclusivity
-    DateTime::from(Local.ymd(year, month, day).and_hms(0, 0, 0))
+    local_to_fixed_offset(Local.ymd(year, month, day).and_hms(0, 0, 0))
+}
+
+pub fn local_to_fixed_offset(date: DateTime<Local>) -> DateTime<FixedOffset> {
+    // why not just DateTime::from(date), you ask?
+    // converting a date to a fixed offset using the from trait
+    // also converts the timezone to utc, but we want to conserve
+    // the timezone. There's probably an easier way to do this,
+    // but this seems like the quickest to me after spending
+    // a few hours reading the docs
+    DateTime::parse_from_rfc3339(&date.to_rfc3339()).unwrap()
 }
 
 /// parses string in <date>(..(<date>)?)? format
@@ -127,7 +139,7 @@ pub fn parse_date_range(date_range: &str) -> Result<DateRange, &str> {
     let dates = date_range.split("..").collect::<Vec<&str>>();
 
     let start_date = get_start_date();
-    let todays_date: DateTime<FixedOffset> = DateTime::from(Local::now());
+    let todays_date = local_to_fixed_offset(Local::now());
 
     if dates.len() == 1 {
         // no dots (-d <date>), so this is the end date
@@ -171,7 +183,7 @@ mod test {
         let DateRange(start, end) = parse_date_range("2021-12-01").unwrap();
 
         assert_eq!(
-            Utc.ymd(1970, 1, 1).and_hms(0, 0, 0).timestamp(),
+            Local.ymd(1970, 1, 1).and_hms(0, 0, 0).timestamp(),
             start.timestamp()
         );
 
@@ -182,15 +194,68 @@ mod test {
     }
 
     #[test]
-    fn test_date_range_start_only() {
-        let DateRange(start, end) = parse_date_range("2021-12-01..").unwrap();
+    fn test_get_date_from_arg() {
+        let d = get_date_from_arg("2021-12-01");
 
         assert_eq!(
             Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
-            start.timestamp()
+            d.timestamp()
         );
+    }
 
-        // this may fail on rare occasions
-        assert_eq!(Local::now().timestamp(), end.timestamp());
+    #[test]
+    fn test_get_date_from_arg_one_digit_day() {
+        let d = get_date_from_arg("2021-12-1");
+
+        assert_eq!(
+            Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
+            d.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_get_date_from_arg_one_digit_month() {
+        let d = get_date_from_arg("2021-1-10");
+
+        assert_eq!(
+            Local.ymd(2021, 1, 10).and_hms(0, 0, 0).timestamp(),
+            d.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_get_date_from_arg_one_digit_month_and_day() {
+        let d = get_date_from_arg("2021-1-1");
+
+        assert_eq!(
+            Local.ymd(2021, 1, 1).and_hms(0, 0, 0).timestamp(),
+            d.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_get_date_from_arg_no_year() {
+        let d = get_date_from_arg("12-01");
+
+        assert_eq!(
+            Local
+                .ymd(Local::today().year(), 12, 1)
+                .and_hms(0, 0, 0)
+                .timestamp(),
+            d.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_get_date_from_arg_no_year_one_digit_day() {
+        let d = get_date_from_arg("12-5");
+
+        assert_eq!(
+            Local
+                .ymd(Local::today().year(), 12, 5)
+                .and_hms(0, 0, 0)
+                .timestamp(),
+            d.timestamp()
+        );
     }
 }
