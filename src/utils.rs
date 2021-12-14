@@ -1,4 +1,6 @@
-use chrono::{DateTime, FixedOffset, Local, TimeZone};
+use crate::times::DateRange;
+
+use chrono::{DateTime, FixedOffset, Local, TimeZone, Utc};
 
 use std::env;
 
@@ -59,15 +61,11 @@ pub fn create_dir(dir: &str) {
 /// Open a file for appending or create it if it doesn't exist
 /// Panic on error, return the file handle
 pub fn create_or_open_file(path: &str) -> File {
-    let file = OpenOptions::new()
+    OpenOptions::new()
         .create(true)
         .append(true)
-        .open(&path);
-
-    match file {
-        Ok(file) => file,
-        Err(e) => panic!("Error opening {}: {}", &path, e),
-    }
+        .open(&path)
+        .expect(&format!("Error opening {}", &path))
 }
 
 /// Returns the length in hours between the start & end time
@@ -100,7 +98,7 @@ pub fn datetime_to_readable_str(date: &DateTime<FixedOffset>) -> String {
 }
 
 pub fn get_start_date() -> DateTime<FixedOffset> {
-    DateTime::from(Local.ymd(1970, 1, 1).and_hms(0, 0, 0))
+    DateTime::from(Utc.ymd(1970, 1, 1).and_hms(0, 0, 0))
 }
 
 pub fn get_date_from_arg(date_arg: &str) -> DateTime<FixedOffset> {
@@ -110,9 +108,89 @@ pub fn get_date_from_arg(date_arg: &str) -> DateTime<FixedOffset> {
         .captures(date_arg)
         .expect(&format!("{} is not a valid date", date_arg));
 
-    let year:  i32 = caps[1].parse().unwrap();
+    let year: i32 = caps[1].parse().unwrap();
     let month: u32 = caps[2].parse().unwrap();
-    let day:   u32 = caps[3].parse().unwrap();
+    let day: u32 = caps[3].parse().unwrap();
 
+    // if it's an 'end' date can do `and_hms(23, 59, 59)` for inclusivity
     DateTime::from(Local.ymd(year, month, day).and_hms(0, 0, 0))
+}
+
+/// parses string in <date>(..(<date>)?)? format
+/// where date -> 'today' | yyyy-mm-dd | mm-dd
+/// <date> returns the range (<earliest_tempus_date>, <date>), inclusive
+/// <date>.. returns the range (<date>, <today>), inclusive
+/// <date1>..<date2> returns the range (<date1>, <date2>), inclusive
+/// 'today' can be used in place of a date instead of typing today's date
+/// a date without the year will search for this year
+pub fn parse_date_range(date_range: &str) -> Result<DateRange, &str> {
+    let dates = date_range.split("..").collect::<Vec<&str>>();
+
+    let start_date = get_start_date();
+    let todays_date: DateTime<FixedOffset> = DateTime::from(Local::now());
+
+    if dates.len() == 1 {
+        // no dots (-d <date>), so this is the end date
+        Ok(DateRange(start_date, get_date_from_arg(dates[0])))
+    } else if dates.len() == 2 {
+        match (dates[0], dates[1]) {
+            ("", "") => Err("Invalid date-range provided"),
+            ("", _) => Ok(DateRange(start_date, get_date_from_arg(dates[1]))),
+            (_, "") => Ok(DateRange(get_date_from_arg(dates[0]), todays_date)),
+            (_, _) => Ok(DateRange(
+                get_date_from_arg(dates[0]),
+                get_date_from_arg(dates[1]),
+            )),
+        }
+    } else {
+        Err("Invalid date-range provided")
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_date_range() {
+        let DateRange(start, end) = parse_date_range("2021-12-01..2021-12-13").unwrap();
+
+        assert_eq!(
+            Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
+            start.timestamp()
+        );
+
+        assert_eq!(
+            Local.ymd(2021, 12, 13).and_hms(0, 0, 0).timestamp(),
+            end.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_date_range_end_only() {
+        let DateRange(start, end) = parse_date_range("2021-12-01").unwrap();
+
+        assert_eq!(
+            Utc.ymd(1970, 1, 1).and_hms(0, 0, 0).timestamp(),
+            start.timestamp()
+        );
+
+        assert_eq!(
+            Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
+            end.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_date_range_start_only() {
+        let DateRange(start, end) = parse_date_range("2021-12-01..").unwrap();
+
+        assert_eq!(
+            Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
+            start.timestamp()
+        );
+
+        // this may fail on rare occasions
+        assert_eq!(Local::now().timestamp(), end.timestamp());
+    }
 }

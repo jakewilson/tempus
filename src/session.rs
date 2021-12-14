@@ -1,5 +1,5 @@
-use std::io::{ErrorKind, Write};
 use std::fs::{self, File};
+use std::io::{ErrorKind, Write};
 
 use chrono::{DateTime, FixedOffset, Local};
 
@@ -34,7 +34,7 @@ impl Session<'_> {
             started_at,
             ended_at: None,
             session_dir,
-            status, 
+            status,
             session_path,
             session_name,
         }
