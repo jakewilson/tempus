@@ -114,7 +114,7 @@ pub fn get_date_from_arg(date_arg: &str) -> DateTime<FixedOffset> {
     let month: u32 = caps[2].parse().unwrap();
     let day: u32 = caps[3].parse().unwrap();
 
-    // if it's an 'end' date can do `and_hms(23, 59, 59)` for inclusivity
+    // TODO if it's an 'end' date can do `and_hms(23, 59, 59)` for inclusivity
     local_to_fixed_offset(Local.ymd(year, month, day).and_hms(0, 0, 0))
 }
 

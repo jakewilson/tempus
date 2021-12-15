@@ -19,23 +19,16 @@ the same command ends the session.
 
 To calculate the total # of hours worked for a project, run
 ```
-$ tempus -p <project_name> --hours
+$ tempus -p <project_name> log --hours
 ```
 
 To view all session times for a project, run
 ```
-$ tempus -p <project_name> --times
+$ tempus -p <project_name> log
 ```
-
-To view all session times for today, run
-```
-$ tempus -p <project_name> --times --today
-```
-
-The `--today` flag also works with `--hours`, to get hours for today.
 
 To view the start time of a session currently in progress, run
 ```
-$ tempus -p <project_name> --start
+$ tempus -p <project_name> -s
 ```
 This can also be used if you've forgotten whether you've started a session or not.

@@ -93,7 +93,7 @@ pub fn print_session_start(project: &str) {
     };
 }
 
-pub fn print_times(project: &str, date_range: &Option<DateRange>) {
+pub fn print_log(project: &str, date_range: &Option<DateRange>) {
     let log_file_path_str = format!("{}/{}", get_project_dir_path(project), &TEMPUS_LOG_NAME);
     let log_file_path = Path::new(&log_file_path_str);
 
@@ -109,7 +109,7 @@ pub fn print_times(project: &str, date_range: &Option<DateRange>) {
     }
 }
 
-pub fn exit(msg: &str) {
+pub fn exit(msg: &str) -> ! {
     eprintln!("{}", msg);
     std::process::exit(1);
 }
