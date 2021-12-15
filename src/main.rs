@@ -77,7 +77,11 @@ fn parse_args() -> ArgMatches<'static> {
                     Arg::with_name("date-range")
                         .value_name("date-range")
                         .takes_value(true)
-                        .help("Date range filter"),
+                        .help(
+                            "Inclusive date range filter.
+<start_date>..<end_date>
+Date format: yyyy-mm-dd | mm-dd | 'today'",
+                        ),
                 )
                 .arg(
                     Arg::with_name("hours")

@@ -1,6 +1,6 @@
 use crate::times::DateRange;
 
-use chrono::{DateTime, Datelike, FixedOffset, Local, TimeZone};
+use chrono::{Date, DateTime, Datelike, FixedOffset, Local, TimeZone};
 
 use std::env;
 
@@ -101,6 +101,18 @@ pub fn get_start_date() -> DateTime<FixedOffset> {
 /// to support the range being inclusive
 /// so that 12-01..12-10 would include all sessions started on 12-10
 pub fn get_date_from_arg(date_arg: &str, end: bool) -> DateTime<FixedOffset> {
+    let get_time = |dt: Date<Local>| {
+        if !end {
+            dt.and_hms(0, 0, 0)
+        } else {
+            dt.and_hms(23, 59, 59)
+        }
+    };
+
+    if date_arg == "today" {
+        return local_to_fixed_offset(get_time(Local::today()));
+    }
+
     let re = Regex::new(r"^(\d{4}-)?(\d{1,2})-(\d{1,2})$").unwrap();
 
     let caps = re
@@ -118,13 +130,7 @@ pub fn get_date_from_arg(date_arg: &str, end: bool) -> DateTime<FixedOffset> {
     let month: u32 = caps[2].parse().unwrap();
     let day: u32 = caps[3].parse().unwrap();
 
-    let date = if end {
-        Local.ymd(year, month, day).and_hms(23, 59, 59)
-    } else {
-        Local.ymd(year, month, day).and_hms(0, 0, 0)
-    };
-
-    local_to_fixed_offset(date)
+    local_to_fixed_offset(get_time(Local.ymd(year, month, day)))
 }
 
 pub fn local_to_fixed_offset(date: DateTime<Local>) -> DateTime<FixedOffset> {
@@ -148,8 +154,6 @@ pub fn parse_date_range(date_range: &str) -> Result<DateRange, &str> {
     let dates = date_range.split("..").collect::<Vec<&str>>();
 
     let start_date = get_start_date();
-    // TODO
-    let todays_date = local_to_fixed_offset(Local::today().and_hms(23, 59, 59));
 
     if dates.len() == 1 {
         // no dots (-d <date>), so this is the end date
@@ -158,7 +162,10 @@ pub fn parse_date_range(date_range: &str) -> Result<DateRange, &str> {
         match (dates[0], dates[1]) {
             ("", "") => Err("Invalid date-range provided"),
             ("", _) => Ok(DateRange(start_date, get_date_from_arg(dates[1], true))),
-            (_, "") => Ok(DateRange(get_date_from_arg(dates[0], false), todays_date)),
+            (_, "") => Ok(DateRange(
+                get_date_from_arg(dates[0], false),
+                get_date_from_arg("today", true),
+            )),
             (_, _) => Ok(DateRange(
                 get_date_from_arg(dates[0], false),
                 get_date_from_arg(dates[1], true),
@@ -230,6 +237,51 @@ mod test {
 
         assert_eq!(
             Local.ymd(2021, 12, 1).and_hms(23, 59, 59).timestamp(),
+            end.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_date_range_today() {
+        let DateRange(start, end) = parse_date_range("today").unwrap();
+
+        assert_eq!(
+            Local.ymd(1970, 1, 1).and_hms(0, 0, 0).timestamp(),
+            start.timestamp()
+        );
+
+        assert_eq!(
+            Local::today().and_hms(23, 59, 59).timestamp(),
+            end.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_date_range_today_2() {
+        let DateRange(start, end) = parse_date_range("today..2021-12-31").unwrap();
+
+        assert_eq!(
+            Local::today().and_hms(0, 0, 0).timestamp(),
+            start.timestamp()
+        );
+
+        assert_eq!(
+            Local.ymd(2021, 12, 31).and_hms(23, 59, 59).timestamp(),
+            end.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_date_range_today_3() {
+        let DateRange(start, end) = parse_date_range("2021-12-1..today").unwrap();
+
+        assert_eq!(
+            Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
+            start.timestamp()
+        );
+
+        assert_eq!(
+            Local::today().and_hms(23, 59, 59).timestamp(),
             end.timestamp()
         );
     }
@@ -308,5 +360,12 @@ mod test {
                 .timestamp(),
             d.timestamp()
         );
+    }
+
+    #[test]
+    fn test_get_date_from_arg_today() {
+        let d = get_date_from_arg("today", false);
+
+        assert_eq!(Local::today().and_hms(0, 0, 0).timestamp(), d.timestamp());
     }
 }
