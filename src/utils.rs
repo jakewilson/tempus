@@ -96,7 +96,11 @@ pub fn get_start_date() -> DateTime<FixedOffset> {
     local_to_fixed_offset(Local.ymd(1970, 1, 1).and_hms(0, 0, 0))
 }
 
-pub fn get_date_from_arg(date_arg: &str) -> DateTime<FixedOffset> {
+/// Returns a DateTime<FixedOffset> given a date string
+/// If `end` == true, the date returned has a time of 23:59:59
+/// to support the range being inclusive
+/// so that 12-01..12-10 would include all sessions started on 12-10
+pub fn get_date_from_arg(date_arg: &str, end: bool) -> DateTime<FixedOffset> {
     let re = Regex::new(r"^(\d{4}-)?(\d{1,2})-(\d{1,2})$").unwrap();
 
     let caps = re
@@ -114,8 +118,13 @@ pub fn get_date_from_arg(date_arg: &str) -> DateTime<FixedOffset> {
     let month: u32 = caps[2].parse().unwrap();
     let day: u32 = caps[3].parse().unwrap();
 
-    // TODO if it's an 'end' date can do `and_hms(23, 59, 59)` for inclusivity
-    local_to_fixed_offset(Local.ymd(year, month, day).and_hms(0, 0, 0))
+    let date = if end {
+        Local.ymd(year, month, day).and_hms(23, 59, 59)
+    } else {
+        Local.ymd(year, month, day).and_hms(0, 0, 0)
+    };
+
+    local_to_fixed_offset(date)
 }
 
 pub fn local_to_fixed_offset(date: DateTime<Local>) -> DateTime<FixedOffset> {
@@ -139,19 +148,20 @@ pub fn parse_date_range(date_range: &str) -> Result<DateRange, &str> {
     let dates = date_range.split("..").collect::<Vec<&str>>();
 
     let start_date = get_start_date();
-    let todays_date = local_to_fixed_offset(Local::now());
+    // TODO
+    let todays_date = local_to_fixed_offset(Local::today().and_hms(23, 59, 59));
 
     if dates.len() == 1 {
         // no dots (-d <date>), so this is the end date
-        Ok(DateRange(start_date, get_date_from_arg(dates[0])))
+        Ok(DateRange(start_date, get_date_from_arg(dates[0], true)))
     } else if dates.len() == 2 {
         match (dates[0], dates[1]) {
             ("", "") => Err("Invalid date-range provided"),
-            ("", _) => Ok(DateRange(start_date, get_date_from_arg(dates[1]))),
-            (_, "") => Ok(DateRange(get_date_from_arg(dates[0]), todays_date)),
+            ("", _) => Ok(DateRange(start_date, get_date_from_arg(dates[1], true))),
+            (_, "") => Ok(DateRange(get_date_from_arg(dates[0], false), todays_date)),
             (_, _) => Ok(DateRange(
-                get_date_from_arg(dates[0]),
-                get_date_from_arg(dates[1]),
+                get_date_from_arg(dates[0], false),
+                get_date_from_arg(dates[1], true),
             )),
         }
     } else {
@@ -173,7 +183,7 @@ mod test {
         );
 
         assert_eq!(
-            Local.ymd(2021, 12, 13).and_hms(0, 0, 0).timestamp(),
+            Local.ymd(2021, 12, 13).and_hms(23, 59, 59).timestamp(),
             end.timestamp()
         );
     }
@@ -188,14 +198,45 @@ mod test {
         );
 
         assert_eq!(
+            Local.ymd(2021, 12, 1).and_hms(23, 59, 59).timestamp(),
+            end.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_date_range_start_only() {
+        let DateRange(start, end) = parse_date_range("2021-12-01..").unwrap();
+
+        assert_eq!(
             Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
+            start.timestamp()
+        );
+
+        assert_eq!(
+            Local::today().and_hms(23, 59, 59).timestamp(),
+            end.timestamp()
+        );
+    }
+
+    #[test]
+    fn test_date_range_end_only_with_dots() {
+        // ..12-01 should be identical to 12-01
+        let DateRange(start, end) = parse_date_range("..12-01").unwrap();
+
+        assert_eq!(
+            Local.ymd(1970, 1, 1).and_hms(0, 0, 0).timestamp(),
+            start.timestamp()
+        );
+
+        assert_eq!(
+            Local.ymd(2021, 12, 1).and_hms(23, 59, 59).timestamp(),
             end.timestamp()
         );
     }
 
     #[test]
     fn test_get_date_from_arg() {
-        let d = get_date_from_arg("2021-12-01");
+        let d = get_date_from_arg("2021-12-01", false);
 
         assert_eq!(
             Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
@@ -204,8 +245,18 @@ mod test {
     }
 
     #[test]
+    fn test_get_date_from_arg_end() {
+        let d = get_date_from_arg("2021-12-01", true);
+
+        assert_eq!(
+            Local.ymd(2021, 12, 1).and_hms(23, 59, 59).timestamp(),
+            d.timestamp()
+        );
+    }
+
+    #[test]
     fn test_get_date_from_arg_one_digit_day() {
-        let d = get_date_from_arg("2021-12-1");
+        let d = get_date_from_arg("2021-12-1", false);
 
         assert_eq!(
             Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
@@ -215,7 +266,7 @@ mod test {
 
     #[test]
     fn test_get_date_from_arg_one_digit_month() {
-        let d = get_date_from_arg("2021-1-10");
+        let d = get_date_from_arg("2021-1-10", false);
 
         assert_eq!(
             Local.ymd(2021, 1, 10).and_hms(0, 0, 0).timestamp(),
@@ -225,7 +276,7 @@ mod test {
 
     #[test]
     fn test_get_date_from_arg_one_digit_month_and_day() {
-        let d = get_date_from_arg("2021-1-1");
+        let d = get_date_from_arg("2021-1-1", false);
 
         assert_eq!(
             Local.ymd(2021, 1, 1).and_hms(0, 0, 0).timestamp(),
@@ -235,7 +286,7 @@ mod test {
 
     #[test]
     fn test_get_date_from_arg_no_year() {
-        let d = get_date_from_arg("12-01");
+        let d = get_date_from_arg("12-01", false);
 
         assert_eq!(
             Local
@@ -248,7 +299,7 @@ mod test {
 
     #[test]
     fn test_get_date_from_arg_no_year_one_digit_day() {
-        let d = get_date_from_arg("12-5");
+        let d = get_date_from_arg("12-5", false);
 
         assert_eq!(
             Local
