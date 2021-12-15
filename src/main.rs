@@ -47,7 +47,7 @@ fn exec_main(matches: &ArgMatches, project: &str) {
 
 fn parse_args() -> ArgMatches<'static> {
     App::new("Tempus")
-        .version("1.1.0")
+        .version("1.2.0")
         .author("Jake Wilson")
         .about("Easy time tracking")
         .arg(
