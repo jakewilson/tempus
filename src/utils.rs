@@ -145,7 +145,7 @@ pub fn local_to_fixed_offset(date: DateTime<Local>) -> DateTime<FixedOffset> {
 
 /// parses string in <date>(..(<date>)?)? format
 /// where date -> 'today' | yyyy-mm-dd | mm-dd
-/// <date> returns the range (<earliest_tempus_date>, <date>), inclusive
+/// <date> returns all sessions starting on that day
 /// <date>.. returns the range (<date>, <today>), inclusive
 /// <date1>..<date2> returns the range (<date1>, <date2>), inclusive
 /// 'today' can be used in place of a date instead of typing today's date
@@ -156,8 +156,10 @@ pub fn parse_date_range(date_range: &str) -> Result<DateRange, &str> {
     let start_date = get_start_date();
 
     if dates.len() == 1 {
-        // no dots (-d <date>), so this is the end date
-        Ok(DateRange(start_date, get_date_from_arg(dates[0], true)))
+        Ok(DateRange(
+            get_date_from_arg(dates[0], false),
+            get_date_from_arg(dates[0], true),
+        ))
     } else if dates.len() == 2 {
         match (dates[0], dates[1]) {
             ("", "") => Err("Invalid date-range provided"),
@@ -200,7 +202,7 @@ mod test {
         let DateRange(start, end) = parse_date_range("2021-12-01").unwrap();
 
         assert_eq!(
-            Local.ymd(1970, 1, 1).and_hms(0, 0, 0).timestamp(),
+            Local.ymd(2021, 12, 1).and_hms(0, 0, 0).timestamp(),
             start.timestamp()
         );
 
@@ -246,7 +248,7 @@ mod test {
         let DateRange(start, end) = parse_date_range("today").unwrap();
 
         assert_eq!(
-            Local.ymd(1970, 1, 1).and_hms(0, 0, 0).timestamp(),
+            Local::today().and_hms(0, 0, 0).timestamp(),
             start.timestamp()
         );
 

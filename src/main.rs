@@ -71,17 +71,12 @@ fn parse_args() -> ArgMatches<'static> {
         .subcommand(
             SubCommand::with_name("log")
                 .about("Lists tempus sessions")
-                .arg(date_range_arg())
-                .arg(
-                    Arg::with_name("hours")
-                        .long("hours")
-                        .help("Get session hours"),
-                ),
+                .arg(date_range_arg()),
         )
         .subcommand(
             SubCommand::with_name("hours")
                 .about("Get session hours")
-                .arg(date_range_arg())
+                .arg(date_range_arg()),
         )
         .get_matches()
 }
@@ -94,7 +89,7 @@ fn date_range_arg() -> Arg<'static, 'static> {
             "Inclusive date range filter.
 <start_date>..<end_date>
 Date format: yyyy-mm-dd | mm-dd | 'today'",
-    )
+        )
 }
 
 fn parse_date_range_arg(matches: &ArgMatches) -> Option<DateRange> {

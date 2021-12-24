@@ -19,8 +19,15 @@ $ tempus -p <project_name> log
 
 Calculate the total # of hours worked for a project:
 ```
-$ tempus -p <project_name> log --hours
+$ tempus -p <project_name> hours
 ```
+
+Calculate the hours worked today on a project:
+```
+$ tempus -p <project_name> hours today
+```
+
+You can also use other [date ranges](#ranges).
 
 View the start time of a session currently in progress:
 ```
@@ -42,6 +49,10 @@ To view times or calculate hours for a subset of sessions, use the date-range ar
 $ tempus -p <project_name> log 2021-11-01..2021-11-30
 ```
 
+```
+$ tempus -p <project_name> hours 2021-11-01..2021-11-30
+```
+
 The range is _inclusive_, so the above example will include all sessions started in the month of November,
 including those started on 11-30. `2021-11-01..2021-12-01` would be all of November and also December 1.
 
@@ -55,12 +66,17 @@ $ tempus -p <project_name> log 2021-11-01..today
 If the year is omitted, the current year is used. If a date or month only requires one digit,
 you need only enter the one:
 ```
-$ tempus -p <project_name> log 11-1..11-30 # same as yyyy-11-01..yyyy-11-30
+$ tempus -p <project_name> hours 11-1..11-30 # same as yyyy-11-01..yyyy-11-30
 ```
 
-Using one date will create a range from 1970-1-1 to the provided date:
+Using one date will create a range from that day @ 0:0:0 to that day @ 23:59:59
 ```
-$ tempus -p <project_name> log 2021-12-1 # same as 1970-1-1..2021-12-01
+$ tempus -p <project_name> log 2021-12-1 # same as 2021-12-01..2021-12-01
+```
+
+Omitting the first date creates a range from 1970-1-1 to the provided date
+```
+$ tempus -p <project_name> hours ..2021-12-1 # same as 1970-1-1..2021-12-1
 ```
 
 Omitting the second date creates a range from the first date to today:
