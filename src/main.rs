@@ -2,6 +2,7 @@ extern crate clap;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 
+use tempus_cli::times::DateRange;
 use tempus_cli::utils;
 
 fn main() {
@@ -11,27 +12,24 @@ fn main() {
     let project = matches.value_of("project").unwrap();
 
     if let Some(matches) = matches.subcommand_matches("log") {
-        exec_log(matches, &project);
+        log(matches, &project);
+    } else if let Some(matches) = matches.subcommand_matches("hours") {
+        hours(matches, &project);
     } else {
         exec_main(&matches, &project);
     }
 }
 
 /// `log` subcommand
-fn exec_log(matches: &ArgMatches, project: &str) {
-    let date_range = match matches.value_of("date-range") {
-        Some(range) => match utils::parse_date_range(&range) {
-            Ok(date_range) => Some(date_range),
-            Err(err) => tempus_cli::exit(err),
-        },
-        None => None,
-    };
+fn log(matches: &ArgMatches, project: &str) {
+    let date_range = parse_date_range_arg(matches);
+    tempus_cli::print_log(&project, &date_range);
+}
 
-    if matches.is_present("hours") {
-        tempus_cli::print_total_log_time(&project, &date_range);
-    } else {
-        tempus_cli::print_log(&project, &date_range);
-    }
+/// `hours` subcommand
+fn hours(matches: &ArgMatches, project: &str) {
+    let date_range = parse_date_range_arg(matches);
+    tempus_cli::print_total_log_time(&project, &date_range);
 }
 
 /// no subcommand
@@ -73,21 +71,38 @@ fn parse_args() -> ArgMatches<'static> {
         .subcommand(
             SubCommand::with_name("log")
                 .about("Lists tempus sessions")
-                .arg(
-                    Arg::with_name("date-range")
-                        .value_name("date-range")
-                        .takes_value(true)
-                        .help(
-                            "Inclusive date range filter.
-<start_date>..<end_date>
-Date format: yyyy-mm-dd | mm-dd | 'today'",
-                        ),
-                )
+                .arg(date_range_arg())
                 .arg(
                     Arg::with_name("hours")
                         .long("hours")
                         .help("Get session hours"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("hours")
+                .about("Get session hours")
+                .arg(date_range_arg())
+        )
         .get_matches()
+}
+
+fn date_range_arg() -> Arg<'static, 'static> {
+    Arg::with_name("date-range")
+        .value_name("date-range")
+        .takes_value(true)
+        .help(
+            "Inclusive date range filter.
+<start_date>..<end_date>
+Date format: yyyy-mm-dd | mm-dd | 'today'",
+    )
+}
+
+fn parse_date_range_arg(matches: &ArgMatches) -> Option<DateRange> {
+    match matches.value_of("date-range") {
+        Some(range) => match utils::parse_date_range(&range) {
+            Ok(date_range) => Some(date_range),
+            Err(err) => tempus_cli::exit(err),
+        },
+        None => None,
+    }
 }
