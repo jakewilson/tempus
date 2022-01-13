@@ -87,7 +87,7 @@ pub fn print_session_start(project: &str) {
     let session = Session::new(&project_dir_path, SESSION_NAME);
     match session.status {
         SessionStatus::Started(start_time) => {
-            println!("{}", utils::datetime_to_readable_str(&start_time))
+            println!("{}", start_time.time())
         }
         SessionStatus::NotStarted => eprintln!("No session started for {}.", project),
     };
